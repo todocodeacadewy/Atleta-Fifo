@@ -1,0 +1,174 @@
+#include <iostream>
+
+using namespace std;
+
+struct hotel {
+    int habi;
+    char nombre[50];
+    hotel* izq;
+    hotel* der;
+};
+
+hotel* raiz, * aux, * aux2;
+
+bool insertarSiNoExiste(hotel* nodo, int tiempo) {
+    if (nodo == nullptr) {
+        return true; // la habitacion no existe, puede insertarse.
+    }
+    if (nodo->habi == tiempo) {
+        return false; // la habitacion ya existe.
+    }
+
+    if (tiempo < nodo->habi) {
+        if (!insertarSiNoExiste(nodo->izq, tiempo)) {
+            return false;
+        }
+    }
+    else {
+        if (!insertarSiNoExiste(nodo->der, tiempo)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void posicionar() {
+
+    if (aux->habi < aux2->habi) {
+        if (aux->izq == NULL) {
+            aux2->izq = aux;
+            aux2 = aux = NULL;
+            free(aux);
+            free(aux2);
+        }
+        else {
+            aux2 = aux2->izq;
+            posicionar();
+
+        }
+
+    }
+    else if (aux->habi > aux2->habi) {
+        if (aux2->der == NULL) {
+            aux2->der = aux;
+            aux2 = aux = NULL;
+            free(aux);
+            free(aux2);
+        }
+        else {
+            aux2 = aux2->der;
+            posicionar();
+        }
+    }
+};
+
+void eliminar(int quitar, hotel*& nodo) {
+    hotel* temp;
+    if (nodo == nullptr) {
+        return; // No se encontró la habitación a eliminar.
+    }
+    if (quitar < nodo->habi) {
+        eliminar(quitar, nodo->izq);
+    }
+    else if (quitar > nodo->habi) {
+        eliminar(quitar, nodo->der);
+    }
+    else {
+        // Encontramos la habitación a eliminar.
+        if (nodo->izq == nullptr) {
+            temp = nodo->der;
+            free(nodo);
+            nodo = temp;
+        }
+        else if (nodo->der == nullptr) {
+            temp = nodo->izq;
+            free(nodo);
+            nodo = temp;
+        }
+        else {
+            // La habitación tiene dos hijos. Encontramos el sucesor in-order.
+            aux2 = nodo->der;
+            while (aux2->izq != nullptr) {
+                aux2 = aux2->izq;
+            }
+            // Copiamos el sucesor en lugar del nodo actual y eliminamos el sucesor.
+            nodo->habi = aux2->habi;
+            eliminar(aux2->habi, nodo->der);
+        }
+    }
+}
+
+
+void registrar() {
+    aux = (struct hotel*)malloc(sizeof(struct hotel));
+    cout << "ingrese la calidad de la habitacion del 1 al 50 del hotel" << endl;
+    cin >> aux->habi;
+    cout << "ingrese su nombre" << endl;
+    cin >> aux->nombre;
+    aux->der = aux->izq = NULL;
+    if (!raiz) {
+        raiz = aux;
+        aux = NULL;
+        free(aux);
+
+    }
+    else {
+        aux2 = raiz;
+        if (insertarSiNoExiste(raiz, aux->habi)) {
+            posicionar();
+        }
+        else {
+            cout << "se posiciona una habitacion -1" << endl;
+            aux->habi = aux->habi - 1;
+            if (insertarSiNoExiste(raiz, aux->habi)) {
+                posicionar();
+            }
+        }
+
+
+    }
+};
+
+
+int mostrar(hotel* tem) {
+    if (tem != NULL) {
+        cout << " huesped:" << tem->nombre << "numero habi." << tem->habi << endl;
+        mostrar(tem->izq);
+        mostrar(tem->der);
+    }
+    return 0;
+};
+
+
+int main() {
+
+    int opc = 0;
+    do {
+        cout << "===================================" << endl;
+        cout << "    menu " << endl;
+        cout << " 1. reservar una habitacion." << endl;
+        cout << " 2. mostrar habitaciones ocupadas del hotel. " << endl;
+        cout << " 3. cancelar una reserva de habitacion" << endl;
+        cout << " 5.salir. " << endl;
+        cin >> opc;
+
+        switch (opc) {
+
+        case 1:registrar();
+
+            break;
+
+        case 2: mostrar(raiz);
+
+            break;
+
+        case 3:
+            int elimi;
+            cout << "Ingrese el número de habitación a cancelar: ";
+            cin >> elimi;
+            eliminar(elimi, raiz);
+            break;
+        }
+    } while (opc != 5);
+}
